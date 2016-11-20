@@ -136,12 +136,6 @@ function! s:parseobject(json, from)
     endif
     let i = i + 1
   endwhile
-  if a:from == 0
-    if len(s) == 1
-      return s[0]["value"]
-    endif
-    throw "Invalid JSON format"
-  endif
   throw "} is expected"
 endfunction
 function! s:parsenumber(json, from)
