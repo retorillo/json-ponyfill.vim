@@ -6,17 +6,17 @@ describe "Stack"
     unlet g:stack
   end
   it "json#stackpeek"
-    Expect retorillo#json#stackpeek(g:stack) == "bar"
+    Expect json_ponyfill#stackpeek(g:stack) == "bar"
   end
-  it "retorillo#json#stackpush"
-    call retorillo#json#stackpush(g:stack, "baz")
-    Expect retorillo#json#stackpeek(g:stack) == "baz"
+  it "json_ponyfill#stackpush"
+    call json_ponyfill#stackpush(g:stack, "baz")
+    Expect json_ponyfill#stackpeek(g:stack) == "baz"
   end
-  it "retorillo#json#stackpop"
-    Expect retorillo#json#stackpop(g:stack) == "bar"
+  it "json_ponyfill#stackpop"
+    Expect json_ponyfill#stackpop(g:stack) == "bar"
     Expect len(g:stack) == 1
-    Expect retorillo#json#stackpop(g:stack) == "foo"
+    Expect json_ponyfill#stackpop(g:stack) == "foo"
     Expect len(g:stack) == 0
-    Expect retorillo#json#stackpop(g:stack) == ""
+    Expect json_ponyfill#stackpop(g:stack) == ""
   end
 end

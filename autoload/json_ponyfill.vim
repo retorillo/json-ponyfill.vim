@@ -24,13 +24,13 @@ function! s:stackpop(list)
   return ""
 endfunction
 
-function! retorillo#json#stackpush(list, item)
+function! json_ponyfill#stackpush(list, item)
   return s:stackpush(a:list, a:item)
 endfunction
-function! retorillo#json#stackpeek(list)
+function! json_ponyfill#stackpeek(list)
   return s:stackpeek(a:list)
 endfunction
-function! retorillo#json#stackpop(list)
+function! json_ponyfill#stackpop(list)
   return s:stackpop(a:list)
 endfunction
 
@@ -206,6 +206,75 @@ function! s:parsejson(json, from)
   throw "invalid format"
 endfunction
 
-function! retorillo#json#parse(json)
-  return s:parsejson(a:json, 0)["value"]
+function! s:unparsenumber(val)
+  if type(a:val) == 0
+    return printf("%d", a:val)
+  else
+    return printf("%g", a:val)
+  endif
+endfunction
+
+function! s:unparsestring(val)
+  let sub = {
+  \  '"': '\\"',
+  \  '\t': '\\t',
+  \  '\n': '\\n',
+  \  '\r': '\\r',
+  \ }
+  let r = a:val
+  for k in keys(sub)
+    let r = substitute(r, k, sub[k], 'g')
+  endfor
+  return '"'.r.'"'
+endfunction
+
+function! s:unparselist(val)
+  let r = []
+  for i in a:val
+    call add(r, s:unparsejson(i))
+    unlet i
+  endfor
+  return join(['[', join(r, ','), ']'], '')
+endfunction
+
+function! s:unparsedict(val)
+  let r = []
+  for k in keys(a:val)
+    call add(r, s:unparsestring(k).':'.s:unparsejson(a:val[k]))
+  endfor
+  return join(['{', join(r, ','), '}'], '')
+endfunction
+function s:unparsebool(val)
+  if a:val
+    return 'true'
+  else
+    return 'false'
+  endif
+endfunction
+
+function! s:unparsejson(val)
+  let t = type(a:val)
+  if t == 0
+    return s:unparsenumber(a:val)
+  elseif t == 1
+    return s:unparsestring(a:val)
+  elseif t == 3
+    return s:unparselist(a:val)
+  elseif t == 4
+    return s:unparsedict(a:val)
+  elseif t == 5
+    return s:unparsenumber(a:val)
+  elseif t == 6
+    return s:unparsebool(a:val)
+  else
+    throw 'Cannot be string (vim type: '. val.')'
+  endif
+endfunction
+
+function! json_ponyfill#json_encode(val)
+  return s:unparsejson(a:val)
+endfunction
+
+function! json_ponyfill#json_decode(json)
+  return s:parsejson(a:json, 0)['value']
 endfunction

@@ -1,33 +1,62 @@
-describe "JSON Parse"
-  it "String"
-    Expect retorillo#json#parse('"foo"') == "foo"
+describe "json_encode"
+  it "encode string"
+    Expect "\\n" == '\n'
+    Expect substitute('foo\n', '\n', '\\n', 'g') == 'foo\n'
+    Expect json_ponyfill#json_encode("foo\n") == "\"foo\\n\"" 
   end
-  it "Number"
-    Expect retorillo#json#parse("12") == 12
-    Expect retorillo#json#parse("12.345") == 12.345
+  it "encode number"
+    Expect json_ponyfill#json_encode(12) == '12'
+    Expect json_ponyfill#json_encode(12.345) == '12.345'
   end
-  it "Boolean"
-    Expect retorillo#json#parse("true") == 1
-    Expect retorillo#json#parse("false") == 0
+  it "encode array"
+    Expect json_ponyfill#json_encode(['foo', 'bar', 'baz']) == '["foo","bar","baz"]'
   end
-  it "Array"
-    Expect retorillo#json#parse('["foo", "bar", "baz"]')
+  it "encode nested array"
+    Expect json_ponyfill#json_encode(['foo', 'bar', ['baz', 'foobar']]) == '["foo","bar",["baz","foobar"]]'
+  end
+  it "encode empty object"
+    Expect json_ponyfill#json_encode({}) ==  "{}"
+  end
+  it "encode simple object"
+    Expect json_ponyfill#json_encode({"foo": "bar"}) ==  '{"foo":"bar"}'
+  end
+  it "encode nested object"
+    Expect json_ponyfill#json_encode({
+     \ 'foo': ['bar', [1, 2, 3] , { 'foobar': 12.345 }]
+     \ }) == '{"foo":["bar",[1,2,3],{"foobar":12.345}]}'
+  end
+end
+
+describe "json_decode"
+  it "decode string"
+    Expect json_ponyfill#json_decode('"foo"') == "foo"
+  end
+  it "decode number"
+    Expect json_ponyfill#json_decode("12") == 12
+    Expect json_ponyfill#json_decode("12.345") == 12.345
+  end
+  it "decode boolean"
+    Expect json_ponyfill#json_decode("true") == 1
+    Expect json_ponyfill#json_decode("false") == 0
+  end
+  it "decode array"
+    Expect json_ponyfill#json_decode('["foo", "bar", "baz"]')
       \ == ["foo", "bar", "baz"]
-    Expect retorillo#json#parse('[1, 2, 3]')
+    Expect json_ponyfill#json_decode('[1, 2, 3]')
       \ == [1, 2, 3]
   end
-  it "Object"
-    Expect retorillo#json#parse('{ "foo": "bar" }')
+  it "decode object"
+    Expect json_ponyfill#json_decode('{ "foo": "bar" }')
       \ == { "foo": "bar" }
-    Expect retorillo#json#parse('{ "foo": { "bar": "baz" } }')
+    Expect json_ponyfill#json_decode('{ "foo": { "bar": "baz" } }')
       \ == { "foo": { "bar": "baz" } }
-    Expect retorillo#json#parse('{ "foo" : { "bar" : "baz", "baz": [ 1, 2, 3 ] } }')
+    Expect json_ponyfill#json_decode('{ "foo" : { "bar" : "baz", "baz": [ 1, 2, 3 ] } }')
       \ == { "foo": { "bar": "baz", "baz": [1, 2, 3] } }
   end
-  it "Object (Failing)"
+  it "decode object (Failing)"
     let exception = ""
     try
-      call retorillo#json#parse('{ "foo" ":" "baz" }')
+      call json_ponyfill#json_decode('{ "foo" ":" "baz" }')
     catch /^colon is expected/
       let exception = v:exception
     finally

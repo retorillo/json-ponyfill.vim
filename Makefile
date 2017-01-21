@@ -1,4 +1,4 @@
 pack:
 	if [ ! -d dist ]; then mkdir dist; fi
-	cd .. && zip -r json.vim/dist/json.vim.zip json.vim/autoload
-	cd .. && unzip -l json.vim/dist/json.vim.zip
+	cd .. && zip -r json-ponyfill.vim/dist/json-ponyfill.vim.zip json-ponyfill.vim/autoload
+	cd .. && unzip -l json-ponyfill.vim/dist/json-ponyfill.vim.zip
