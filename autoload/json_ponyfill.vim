@@ -244,7 +244,7 @@ function! s:unparsedict(val)
   endfor
   return join(['{', join(r, ','), '}'], '')
 endfunction
-function s:unparsebool(val)
+function! s:unparsebool(val)
   if a:val
     return 'true'
   else
