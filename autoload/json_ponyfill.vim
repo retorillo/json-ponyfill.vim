@@ -34,7 +34,7 @@ function! json_ponyfill#stackpop(list)
   return s:stackpop(a:list)
 endfunction
 
-function! s:parsestring(json, from)
+function! s:parsestring(json, from, option)
     if a:json[a:from] != '"'
       throw '" is expected'
     endif
@@ -58,7 +58,7 @@ function! s:parsestring(json, from)
     endwhile
     throw '" is unclosed'
 endfunction
-function! s:parsearray(json, from)
+function! s:parsearray(json, from, option)
   if a:json[a:from] != "["
     throw "[ is expected"
   endif
@@ -83,7 +83,7 @@ function! s:parsearray(json, from)
       call s:stackpush(s, c)
     else
       if matchstr(c, s:ignoreCharacterPattern) == ""
-        let p = s:parsejson(a:json, i)
+        let p = s:parsejson(a:json, i, a:option)
         call add(s, p["value"])
         let i = p["index"]
       endif
@@ -92,7 +92,7 @@ function! s:parsearray(json, from)
   endwhile
   throw "] is expected"
 endfunction
-function! s:parseobject(json, from)
+function! s:parseobject(json, from, option)
   if a:json[a:from] != "{"
     throw "{ is expected"
   endif
@@ -129,7 +129,7 @@ function! s:parseobject(json, from)
       call s:stackpush(s, { "token": 1, "value": c, "index": i })
     else
       if matchstr(c, s:ignoreCharacterPattern) == ""
-        let p = s:parsejson(a:json, i)
+        let p = s:parsejson(a:json, i, a:option)
         let i = p["index"]
         call s:stackpush(s, { "token": 0, "value": p["value"], "index": i })
       endif
@@ -138,7 +138,7 @@ function! s:parseobject(json, from)
   endwhile
   throw "} is expected"
 endfunction
-function! s:parsenumber(json, from)
+function! s:parsenumber(json, from, option)
   let l = strlen(a:json)
   let i = a:from
   let b = ""
@@ -159,7 +159,7 @@ function! s:parsenumber(json, from)
   endif
   return { "value": v, "index": i - 1 }
 endfunction
-function! s:parsekeyword(json, from)
+function! s:parsekeyword(json, from, option)
   let l = strlen(a:json)
   let i = a:from
   let b = ""
@@ -181,21 +181,25 @@ function! s:parsekeyword(json, from)
     return { "value": v, "index": i - 1 }
   endif
 endfunction
-function! s:parsejson(json, from)
+
+function! s:parsejson(json, from, option)
   let l = strlen(a:json)
   let i = a:from
+  if get(a:option, 'progress')
+    call s:progressbar(a:from, l, 50)
+  endif
   while i < l
     let c = a:json[i]
     if c == "{"
-      return s:parseobject(a:json, i)
+      return s:parseobject(a:json, i, a:option)
     elseif c == "["
-      return s:parsearray(a:json, i)
+      return s:parsearray(a:json, i, a:option)
     elseif c == '"'
-      return s:parsestring(a:json, i)
+      return s:parsestring(a:json, i, a:option)
     elseif matchstr(c, s:numberStarterPattern) != ""
-      return s:parsenumber(a:json, i)
+      return s:parsenumber(a:json, i, a:option)
     elseif matchstr(c, s:keywordStarterPattern) != ""
-      return s:parsekeyword(a:json, i)
+      return s:parsekeyword(a:json, i, a:option)
     else
       if matchstr(c, s:ignoreCharacterPattern) == ""
         throw "unexpected character: ". c . " (index: ". i .")"
@@ -271,10 +275,30 @@ function! s:unparsejson(val)
   endif
 endfunction
 
+function! s:progressbar(dividend, divisor, width)
+  if a:width == 0
+    echo ''
+  else
+    let rate = a:dividend / (a:divisor * 1.0)
+    let head = float2nr(floor(a:width * rate))
+    let tail = a:width - head
+    echo printf('json_decode %3d%% [%s%s]', 
+      \ float2nr(rate * 100),
+      \ repeat('=', head),
+      \ repeat('.', tail))
+  endif
+  redraw
+endfunction
+
 function! json_ponyfill#json_encode(val)
   return s:unparsejson(a:val)
 endfunction
 
-function! json_ponyfill#json_decode(json)
-  return s:parsejson(a:json, 0)['value']
+function! json_ponyfill#json_decode(json, ...)
+  let option = len(a:000) > 0 && type(a:000[0]) == 4 ? a:000[0] : {}
+  let obj = s:parsejson(a:json, 0, option)['value']
+  if get(option, 'progress')
+    call s:progressbar(0, 0, 0)
+  endif
+  return obj
 endfunction
