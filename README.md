@@ -31,7 +31,7 @@ git clone https://github.com/retorillo/json-ponyfill.vim ~/.vim/bundle/json-pony
 Of course my code may be not sophisticated, but originally Vim Script is not
 good for large processing.
 
-In this case, consider to use `json_ponlyfill#json_decode(json, { progress: 1 })`
+In this case, consider to use `json_ponlyfill#json_decode(json, { 'progress': 1 })`
 to display progress bar like below:
 
 ```
