@@ -1,3 +1,6 @@
+let s:cpo = &cpo
+set cpo&vim
+
 let s:ignoreCharacterPattern = "\\s"
 let s:keywordStarterPattern = "\\c[_a-z]"
 let s:keywordCharacterPattern = "\\c[_a-z0-9]"
@@ -5,34 +8,6 @@ let s:numberStarterPattern = "[0-9]"
 let s:numberCharacterPattern = "[.0-9]"
 let s:floatPattern = "\\v^[0-9]+(\\.[0-9]+)?$"
 let s:integerPattern = "\\v^[0-9]+$"
-
-function! s:stackpush(list, item)
-  call add(a:list, a:item)
-endfunction 
-function! s:stackpeek(list)
-  if !empty(a:list)
-    return get(a:list, len(a:list) - 1)
-  endif
-  return ""
-endfunction
-function! s:stackpop(list)
-  if !empty(a:list)
-    let peek = s:stackpeek(a:list)
-    call remove(a:list, len(a:list) - 1)
-    return peek
-  endif
-  return ""
-endfunction
-
-function! json_ponyfill#stackpush(list, item)
-  return s:stackpush(a:list, a:item)
-endfunction
-function! json_ponyfill#stackpeek(list)
-  return s:stackpeek(a:list)
-endfunction
-function! json_ponyfill#stackpop(list)
-  return s:stackpop(a:list)
-endfunction
 
 function! s:parsestring(json, from, option)
     if a:json[a:from] != '"'
@@ -71,16 +46,16 @@ function! s:parsearray(json, from, option)
       let r = []
       while !empty(s)
         if !empty(r)
-          let comma = s:stackpop(s)
+          let comma = json_ponyfill#stack#pop(s)
           if comma != ","
             throw ", is expected"
           endif
         endif
-        call insert(r, s:stackpop(s), 0)
+        call insert(r, json_ponyfill#stack#pop(s), 0)
       endwhile
       return { "value": r, "index": i }
     elseif c == ","
-      call s:stackpush(s, c)
+      call json_ponyfill#stack#push(s, c)
     else
       if matchstr(c, s:ignoreCharacterPattern) == ""
         let p = s:parsejson(a:json, i, a:option)
@@ -105,33 +80,33 @@ function! s:parseobject(json, from, option)
       let r = {}
       while !empty(s)
         if !empty(r)
-          let comma = s:stackpop(s)
+          let comma = json_ponyfill#stack#pop(s)
           if !comma["token"] || comma["value"] != ","
             throw ", is expected"
           endif
         endif
         if len(s) < 3
-          throw "'". s:stackpeek(s)["value"] .'" is unexpeted'
+          throw "'". json_ponyfill#stack#peek(s)["value"] .'" is unexpeted'
         endif
-        let value = s:stackpop(s)
-        let colon = s:stackpop(s)
-        let name = s:stackpop(s)
+        let value = json_ponyfill#stack#pop(s)
+        let colon = json_ponyfill#stack#pop(s)
+        let name = json_ponyfill#stack#pop(s)
         if !colon["token"] || colon["value"] != ":"
           throw 'colon is expected before "'.colon["value"]"\""
         endif
         if name["token"] || type(name["value"]) != 1
           throw name["value"].' is unexpected'
         endif
-        let r[name["value"]] = value["value"] 
+        let r[name["value"]] = value["value"]
       endwhile
       return { "value": r, "index": i }
     elseif matchstr(c, "[:,]") != ""
-      call s:stackpush(s, { "token": 1, "value": c, "index": i })
+      call json_ponyfill#stack#push(s, { "token": 1, "value": c, "index": i })
     else
       if matchstr(c, s:ignoreCharacterPattern) == ""
         let p = s:parsejson(a:json, i, a:option)
         let i = p["index"]
-        call s:stackpush(s, { "token": 0, "value": p["value"], "index": i })
+        call json_ponyfill#stack#push(s, { "token": 0, "value": p["value"], "index": i })
       endif
     endif
     let i = i + 1
@@ -282,7 +257,7 @@ function! s:progressbar(dividend, divisor, width)
     let rate = a:dividend / (a:divisor * 1.0)
     let head = float2nr(floor(a:width * rate))
     let tail = a:width - head
-    echo printf('json_decode %3d%% [%s%s]', 
+    echo printf('json_decode %3d%% [%s%s]',
       \ float2nr(rate * 100),
       \ repeat('=', head),
       \ repeat('.', tail))
@@ -290,11 +265,11 @@ function! s:progressbar(dividend, divisor, width)
   redraw
 endfunction
 
-function! json_ponyfill#json_encode(val)
+function! json_ponyfill#native#json_encode(val)
   return s:unparsejson(a:val)
 endfunction
 
-function! json_ponyfill#json_decode(json, ...)
+function! json_ponyfill#native#json_decode(json, ...)
   let option = len(a:000) > 0 && type(a:000[0]) == 4 ? a:000[0] : {}
   let obj = s:parsejson(a:json, 0, option)['value']
   if get(option, 'progress')
@@ -302,3 +277,6 @@ function! json_ponyfill#json_decode(json, ...)
   endif
   return obj
 endfunction
+
+let &cpo = s:cpo
+unlet s:cpo

@@ -42,6 +42,14 @@ json_decode  50% [=========================.........................]
 wipe previously printed all echo message out.  See `:h redraw`, `:h messages`,
 `:h echomsg`, and `:h echoerr` to learn more.
 
+## Unit testing (For plugin developers)
+
+`test/test.vim` is a bit useful snippet for unit testing.
+
+```
+:let g:json_ponyfill = 1 | source test/test.vim
+```
+
 ## License
 
 MIT License
