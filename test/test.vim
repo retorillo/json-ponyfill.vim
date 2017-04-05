@@ -61,13 +61,13 @@ call s:describe("json_ponyfill#stack")
   call s:itshouldeql("json#stackpeek",
     \ json_ponyfill#stack#peek(s:stack),
     \ "bar")
-  
+
   let s:stack = [ "foo", "bar" ]
   call json_ponyfill#stack#push(s:stack, "baz")
   call s:itshouldeql("json_ponyfill#stack#push",
     \ json_ponyfill#stack#peek(s:stack),
     \ "baz")
-  
+
   let s:stack = [ "foo", "bar" ]
   call s:itshouldeql('json_ponyfill#stack#pop #1',
     \ json_ponyfill#stack#pop(s:stack),
@@ -141,7 +141,7 @@ call s:describe("json_ponyfill#native#json_encode")
   call s:itshouldeql('decode object #3',
     \ json_ponyfill#native#json_decode('{ "foo" : { "bar" : "baz", "baz": [ 1, 2, 3 ] } }'),
     \ { "foo": { "bar": "baz", "baz": [1, 2, 3] } })
-  
+
   let throwexception = 0
   try
     call json_ponyfill#native#json_decode('{ "foo" ":" "baz" }')
@@ -151,6 +151,15 @@ call s:describe("json_ponyfill#native#json_encode")
     call s:itshouldeql("decode object (Failing)",
       \ throwexception, 1)
   endtry
+call s:enddescribe()
+
+call s:describe("json_ponyfill#python")
+if json_ponyfill#python#ready()
+  call s:itshouldeql('decode', json_ponyfill#python#json_decode('{ "foo": "bar" }'), { "foo": "bar" })
+  call s:itshouldeql('encode', json_ponyfill#python#json_encode({ "foo": "bar" }), '{"foo": "bar"}')
+else
+  s:failing('No python or json module. Skipped python testcase.', '-python', '+python')
+endif
 call s:enddescribe()
 
 let &cpo = s:cpo

@@ -24,14 +24,26 @@ endfunction
 git clone https://github.com/retorillo/json-ponyfill.vim ~/.vim/bundle/json-ponyfill.vim
 ```
 
-## Displaying progress bar
+## Performance problem and workarounds
 
-`json_ponyfill#json_decode` will take a long time when parsing large JSON.
+`json_ponyfill#json_decode` and `json_ponyfill#json_encode` will take a long
+time working with large JSON.
 
 Of course my code may be not sophisticated, but originally Vim Script is not
 good for large processing.
 
-In this case, consider to use `json_ponlyfill#json_decode(json, { 'progress': 1 })`
+Consider to use the following workarounds:
+
+### Using python if possible
+
+Use `json_ponyfill#json_decode(json, { 'python': 1 })`
+to use python if possible.
+
+Python can process faster than Vim Script.
+
+### Displaying progress bar
+
+Use `json_ponyfill#json_decode(json, { 'progress': 1 })`
 to display progress bar like below:
 
 ```
@@ -41,6 +53,12 @@ json_decode  50% [=========================.........................]
 **NOTE:** Progress bar use `redraw` command to refresh itself. `redraw` command
 wipe previously printed all echo message out.  See `:h redraw`, `:h messages`,
 `:h echomsg`, and `:h echoerr` to learn more.
+
+### Combining the above workarounds
+
+Of course, the above options can be combined like:
+`json_ponyfill#json_decode(json, { 'progress': 1, 'python': 1 }`.
+But note that progress option will be ignored if python is available.
 
 ## Unit testing (For plugin developers)
 
